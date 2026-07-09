@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     groq_model: str = "llama-3.3-70b-versatile"
 
     # --- Embedding model (runs locally via sentence-transformers) ---
-    embedding_model: str = "all-MiniLM-L6-v2"   # 384-dim, fast, good quality
+    embedding_model: str = "BAAI/bge-small-en-v1.5"   # 384-dim, ONNX, low memory
     embedding_dim: int = 384
 
     # --- Chunking ---

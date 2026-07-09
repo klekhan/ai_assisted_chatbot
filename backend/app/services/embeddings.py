@@ -1,25 +1,29 @@
 """
-Turns text into vectors (embeddings) using a local, free, open-source model.
-The model downloads once (~90MB) on first run and is cached afterwards, so
-there is no per-request cost or API key needed for embeddings.
+Turns text into vectors (embeddings) using a local, free, open-source model
+run via fastembed (ONNX runtime) — deliberately NOT sentence-transformers,
+because that pulls in PyTorch, which is too heavy for free-tier hosts like
+Render's 512MB memory limit. fastembed does the same job in a fraction of
+the memory, with no GPU/PyTorch dependency.
+
+The model downloads once (~130MB) on first run and is cached afterwards.
 """
 from functools import lru_cache
-from sentence_transformers import SentenceTransformer
+from fastembed import TextEmbedding
 from app.config import settings
 
 
 @lru_cache(maxsize=1)
-def get_embedder() -> SentenceTransformer:
+def get_embedder() -> TextEmbedding:
     # Cached so the (relatively slow) model load only happens once per process.
-    return SentenceTransformer(settings.embedding_model)
+    return TextEmbedding(model_name=settings.embedding_model)
 
 
 def embed_texts(texts: list[str]) -> list[list[float]]:
     if not texts:
         return []
     model = get_embedder()
-    vectors = model.encode(texts, normalize_embeddings=True, show_progress_bar=False)
-    return vectors.tolist()
+    vectors = list(model.embed(texts))
+    return [v.tolist() for v in vectors]
 
 
 def embed_query(text: str) -> list[float]:
