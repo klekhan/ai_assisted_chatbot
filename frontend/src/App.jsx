@@ -87,7 +87,7 @@ export default function App() {
       />
 
       {error && (
-        <div className="fixed bottom-4 right-4 max-w-sm rounded-lg border border-danger/40 bg-elevated px-4 py-3 text-[13px] text-ink shadow-lg">
+        <div className="fixed bottom-4 right-4 max-w-sm rounded-xl border border-danger/30 bg-surface shadow-card px-4 py-3 text-[13px] text-ink">
           <button
             onClick={() => setError(null)}
             className="float-right text-muted hover:text-ink ml-2"

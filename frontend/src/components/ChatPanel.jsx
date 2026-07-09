@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowUp, Sparkles } from "lucide-react";
+import { ArrowUp } from "lucide-react";
 import MessageBubble from "./MessageBubble";
 
 export default function ChatPanel({ messages, sending, hasDocuments, onSend }) {
@@ -33,15 +33,13 @@ export default function ChatPanel({ messages, sending, hasDocuments, onSend }) {
   };
 
   return (
-    <main className="flex-1 flex flex-col h-full min-w-0">
+    <main className="flex-1 flex flex-col h-full min-w-0 bg-base">
       <div ref={scrollRef} className="flex-1 overflow-y-auto">
         <div className="max-w-[720px] mx-auto px-6 py-8 flex flex-col gap-6">
           {messages.length === 0 && (
             <div className="flex flex-col items-center text-center gap-3 py-24">
-              <div className="w-11 h-11 rounded-full bg-accent-dim flex items-center justify-center">
-                <Sparkles size={20} className="text-accent-soft" />
-              </div>
-              <h2 className="text-[17px] font-medium text-ink">
+              <img src="/logo.webp" alt="" className="w-12 h-12 rounded-full shadow-card" />
+              <h2 className="text-[17px] font-semibold text-ink">
                 {hasDocuments ? "Ask something about your documents" : "Add a document to get started"}
               </h2>
               <p className="text-[13px] text-muted max-w-[380px] leading-relaxed">
@@ -58,11 +56,11 @@ export default function ChatPanel({ messages, sending, hasDocuments, onSend }) {
         </div>
       </div>
 
-      <div className="border-t border-border px-6 py-4">
+      <div className="px-6 py-4">
         <form
           onSubmit={handleSubmit}
           className="max-w-[720px] mx-auto flex items-end gap-2 rounded-2xl border border-border
-            bg-elevated px-3 py-2 focus-within:border-accent/50 transition-colors"
+            bg-surface shadow-card px-3 py-2 focus-within:border-accent/50 transition-colors"
         >
           <textarea
             ref={textareaRef}
@@ -80,7 +78,7 @@ export default function ChatPanel({ messages, sending, hasDocuments, onSend }) {
             disabled={!input.trim() || sending || !hasDocuments}
             aria-label="Send message"
             className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 mb-0.5
-              bg-accent text-base disabled:bg-border disabled:text-muted transition-colors"
+              bg-accent text-white disabled:bg-border disabled:text-muted transition-colors"
           >
             <ArrowUp size={16} strokeWidth={2.5} />
           </button>

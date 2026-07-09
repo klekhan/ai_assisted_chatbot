@@ -11,17 +11,17 @@ export default function Sidebar({ documents, loading, uploading, uploadProgress,
 
   const handleFiles = (files) => {
     if (!files || files.length === 0) return;
-    // Upload sequentially so progress reporting stays simple and predictable.
     Array.from(files).forEach((file) => onUpload(file));
   };
 
   return (
     <aside className="w-[300px] shrink-0 h-full flex flex-col bg-surface border-r border-border">
-      <div className="px-5 pt-6 pb-4">
-        <h1 className="text-[15px] font-semibold tracking-tight text-ink">Knowledge base</h1>
-        <p className="text-[12.5px] text-muted mt-1 leading-relaxed">
-          Answers are grounded only in what you add here.
-        </p>
+      <div className="px-5 pt-6 pb-4 flex items-center gap-2.5">
+        <img src="/logo.webp" alt="Logo" className="w-9 h-9 rounded-full shrink-0" />
+        <div>
+          <h1 className="text-[15px] font-semibold tracking-tight text-ink leading-tight">Knowledge base</h1>
+          <p className="text-[11.5px] text-muted leading-tight">Grounded document Q&A</p>
+        </div>
       </div>
 
       <div className="px-4">
@@ -36,13 +36,13 @@ export default function Sidebar({ documents, loading, uploading, uploadProgress,
             setDragOver(false);
             handleFiles(e.dataTransfer.files);
           }}
-          className={`flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed
+          className={`flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed
             px-4 py-6 cursor-pointer transition-colors
-            ${dragOver ? "border-accent bg-accent-dim/30" : "border-border hover:border-muted"}`}
+            ${dragOver ? "border-accent bg-accent-dim" : "border-border bg-elevated hover:border-accent/50"}`}
         >
           <Upload size={18} className={dragOver ? "text-accent" : "text-muted"} />
           <span className="text-[12.5px] text-muted text-center leading-relaxed">
-            Drop files or <span className="text-accent-soft">browse</span>
+            Drop files or <span className="text-accent font-medium">browse</span>
             <br />
             PDF, DOCX, TXT, MD · 20MB max
           </span>
@@ -65,9 +65,9 @@ export default function Sidebar({ documents, loading, uploading, uploadProgress,
               <span>Indexing…</span>
               <span>{uploadProgress}%</span>
             </div>
-            <div className="h-1 w-full rounded-full bg-elevated overflow-hidden">
+            <div className="h-1.5 w-full rounded-full bg-elevated overflow-hidden">
               <div
-                className="h-full bg-accent transition-all duration-200"
+                className="h-full bg-accent transition-all duration-200 rounded-full"
                 style={{ width: `${uploadProgress}%` }}
               />
             </div>
@@ -89,22 +89,22 @@ export default function Sidebar({ documents, loading, uploading, uploadProgress,
 
         {!loading && documents.length === 0 && (
           <div className="flex flex-col items-center text-center gap-2 px-3 py-8 text-muted">
-            <FileWarning size={20} className="opacity-50" />
+            <FileWarning size={20} className="opacity-40" />
             <p className="text-[12.5px] leading-relaxed">
               No documents yet. Add one above to start asking questions.
             </p>
           </div>
         )}
 
-        <ul className="flex flex-col gap-1">
+        <ul className="flex flex-col gap-1.5">
           {documents.map((doc) => (
             <li
               key={doc.document_id}
-              className="group flex items-start gap-2.5 rounded-lg px-2.5 py-2.5 hover:bg-elevated transition-colors"
+              className="group flex items-start gap-2.5 rounded-xl px-2.5 py-2.5 bg-elevated/60 hover:bg-elevated transition-colors"
             >
-              <FileText size={15} className="text-muted mt-0.5 shrink-0" />
+              <FileText size={15} className="text-accent mt-0.5 shrink-0" />
               <div className="min-w-0 flex-1">
-                <p className="text-[13px] text-ink truncate" title={doc.filename}>
+                <p className="text-[13px] text-ink truncate font-medium" title={doc.filename}>
                   {doc.filename}
                 </p>
                 <p className="text-[11.5px] text-muted mt-0.5 font-mono">

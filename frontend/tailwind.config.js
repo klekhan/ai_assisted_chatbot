@@ -4,30 +4,35 @@ export default {
   theme: {
     extend: {
       colors: {
-        base: "#0A0A0F",
-        surface: "#131318",
-        elevated: "#1C1C24",
-        border: "#262631",
-        muted: "#8A8A98",
-        ink: "#EDEDF2",
-        accent: {
-          DEFAULT: "#E8A33D",
-          soft: "#F2C572",
-          dim: "#4A3A1E",
+        base: "#F7F6F1",
+        surface: "#FFFFFF",
+        elevated: "#F1EFE8",
+        border: "#E5E2D9",
+        muted: "#7C8087",
+        ink: "#1A2438",
+        navy: {
+          DEFAULT: "#16305C",
+          soft: "#2A4A82",
         },
-        info: "#5B8DEF",
-        danger: "#E8583D",
+        accent: {
+          DEFAULT: "#F2761F",
+          soft: "#F79A56",
+          dim: "#FCE6D3",
+        },
+        info: "#2A6FDB",
+        danger: "#E2472B",
       },
       fontFamily: {
         sans: ["Inter", "system-ui", "sans-serif"],
         mono: ["JetBrains Mono", "monospace"],
       },
       boxShadow: {
-        glow: "0 0 0 1px rgba(232, 163, 61, 0.15), 0 8px 24px rgba(232, 163, 61, 0.08)",
+        card: "0 1px 2px rgba(26, 36, 56, 0.04), 0 8px 24px rgba(26, 36, 56, 0.05)",
+        glow: "0 0 0 1px rgba(242, 118, 31, 0.15), 0 8px 24px rgba(242, 118, 31, 0.10)",
       },
       keyframes: {
         pulse_soft: {
-          "0%, 100%": { opacity: 0.4 },
+          "0%, 100%": { opacity: 0.35 },
           "50%": { opacity: 1 },
         },
       },
