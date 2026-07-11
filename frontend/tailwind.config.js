@@ -35,11 +35,16 @@ export default {
           "0%, 100%": { opacity: 0.35 },
           "50%": { opacity: 1 },
         },
+        orb_float: {
+          "0%, 100%": { transform: "scale(1) translateY(0px)", opacity: 0.28 },
+          "50%": { transform: "scale(1.08) translateY(-16px)", opacity: 0.38 },
+        },
       },
       animation: {
         pulse_soft: "pulse_soft 1.4s ease-in-out infinite",
+        orb_float: "orb_float 7s ease-in-out infinite",
       },
     },
   },
-  plugins: [],
+  plugins: [require("@tailwindcss/typography")],
 };

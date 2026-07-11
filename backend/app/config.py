@@ -30,8 +30,13 @@ class Settings(BaseSettings):
     top_k: int = 5               # how many chunks to retrieve per query
 
     # --- App / security ---
-    api_key: str = "change-me"   # simple shared-secret auth for the API itself
-    cors_origins: str = "*"      # comma-separated list in production
+    api_key: str = "change-me"     # shared key the public frontend uses to call /chat
+    admin_key: str = "change-me-admin"   # separate, stronger key for the admin dashboard
+    cors_origins: str = "*"        # comma-separated list in production
+
+    # --- Knowledge assistant branding (shown on the public empty-state) ---
+    kb_topics: str = "Admissions,Fees,Placements,Hostel,Courses"
+    institution_name: str = "PES University"
 
 
 settings = Settings()

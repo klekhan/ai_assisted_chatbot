@@ -1,12 +1,12 @@
 const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 const API_KEY = import.meta.env.VITE_API_KEY || "";
 
-async function request(path, options = {}) {
+async function request(path, { adminKey, headers, ...options } = {}) {
   const res = await fetch(`${API_URL}${path}`, {
     ...options,
     headers: {
-      "X-API-Key": API_KEY,
-      ...options.headers,
+      ...(adminKey ? { "X-Admin-Key": adminKey } : { "X-API-Key": API_KEY }),
+      ...headers,
     },
   });
 
@@ -24,19 +24,35 @@ async function request(path, options = {}) {
   return res.json();
 }
 
-export function listDocuments() {
-  return request("/documents");
+// --- Public (no login required) ---
+
+export function askQuestion(question) {
+  return request("/chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ question }),
+  });
 }
 
-export function uploadDocument(file, onProgress) {
+export function getTopics() {
+  return request("/topics");
+}
+
+// --- Admin (adminKey passed explicitly each call — never stored in the
+// build, only ever in the browser's localStorage after manual login) ---
+
+export function adminListDocuments(adminKey) {
+  return request("/admin/documents", { adminKey });
+}
+
+export function adminUploadDocument(adminKey, file, onProgress) {
   const formData = new FormData();
   formData.append("file", file);
 
-  // Use XHR instead of fetch so we can report upload progress in the UI.
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
-    xhr.open("POST", `${API_URL}/documents/upload`);
-    xhr.setRequestHeader("X-API-Key", API_KEY);
+    xhr.open("POST", `${API_URL}/admin/documents/upload`);
+    xhr.setRequestHeader("X-Admin-Key", adminKey);
 
     xhr.upload.onprogress = (e) => {
       if (e.lengthComputable && onProgress) {
@@ -62,14 +78,19 @@ export function uploadDocument(file, onProgress) {
   });
 }
 
-export function deleteDocument(documentId) {
-  return request(`/documents/${documentId}`, { method: "DELETE" });
+export function adminDeleteDocument(adminKey, documentId) {
+  return request(`/admin/documents/${documentId}`, { method: "DELETE", adminKey });
 }
 
-export function askQuestion(question) {
-  return request("/chat", {
+export function adminDebugChat(adminKey, question) {
+  return request("/admin/debug-chat", {
     method: "POST",
+    adminKey,
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ question }),
   });
+}
+
+export function adminGetStats(adminKey) {
+  return request("/admin/stats", { adminKey });
 }
