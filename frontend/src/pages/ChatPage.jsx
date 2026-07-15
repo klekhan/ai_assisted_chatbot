@@ -35,7 +35,11 @@ export default function ChatPage() {
     setError(null);
 
     try {
-      const res = await askQuestion(trimmed);
+      // Send recent history (before this new message) so the backend can
+      // rewrite follow-up questions like "what about that?" into a
+      // standalone question before retrieval.
+      const recentHistory = messages.slice(-6).map(({ role, content }) => ({ role, content }));
+      const res = await askQuestion(trimmed, recentHistory);
       setMessages((prev) => [...prev, { role: "assistant", content: res.answer }]);
     } catch (err) {
       setError(err.message);

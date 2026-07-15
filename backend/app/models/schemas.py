@@ -2,8 +2,18 @@ from pydantic import BaseModel
 
 
 # --- Public chat (no retrieval metadata ever included) ---
+class HistoryMessage(BaseModel):
+    role: str   # "user" or "assistant"
+    content: str
+
+
 class ChatRequest(BaseModel):
     question: str
+    # Recent conversation turns, oldest first. Used only to rewrite follow-up
+    # questions ("what about that?") into standalone ones before retrieval —
+    # never shown to the end user. Optional and defaults to empty, so old
+    # clients / a fresh conversation work unchanged.
+    history: list[HistoryMessage] = []
 
 
 class ChatResponse(BaseModel):
@@ -36,6 +46,12 @@ class DebugSourceChunk(BaseModel):
 
 class DebugChatResponse(BaseModel):
     answer: str
+    # The question actually used for retrieval, after conversation-history
+    # rewriting. Same as the original question if there was no history, or
+    # if nothing needed rewriting. Shown only in the admin debug panel — this
+    # is exactly the kind of "why did it retrieve that" detail that belongs
+    # there and nowhere else.
+    standalone_question: str
     sources: list[DebugSourceChunk]
 
 

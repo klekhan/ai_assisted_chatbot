@@ -34,11 +34,12 @@ async def upload_document(file: UploadFile = File(...)):
     if len(file_bytes) > MAX_FILE_SIZE_MB * 1024 * 1024:
         raise HTTPException(400, f"File too large. Max {MAX_FILE_SIZE_MB}MB.")
 
-    text = parsing.extract_text(file.filename, file_bytes)
-    if not text.strip():
+    sections = parsing.extract_sections(file.filename, file_bytes)
+    plain_text = parsing.sections_to_plain_text(sections)
+    if not plain_text.strip():
         raise HTTPException(400, "No extractable text found in this document.")
 
-    chunks = chunking.chunk_text(text)
+    chunks = chunking.chunk_sections(sections)
     if not chunks:
         raise HTTPException(400, "Document produced no usable chunks.")
 
@@ -79,13 +80,16 @@ async def debug_chat(request: ChatRequest):
     """Same retrieval + generation as public /chat, but returns full
     retrieval internals — for verifying the knowledge base is answering
     from the right sources, not for end users."""
-    query_vector = embeddings.embed_query(request.question)
+    standalone_question = llm.condense_question(request.question, request.history)
+
+    query_vector = embeddings.embed_query(standalone_question)
     vectorstore.ensure_collection()
-    results = vectorstore.search(query_vector, top_k=settings.top_k)
-    answer = llm.generate_answer(request.question, results)
+    results = vectorstore.search(query_vector, top_k=settings.top_k, min_score=settings.min_score)
+    answer = llm.generate_answer(standalone_question, results)
 
     return DebugChatResponse(
         answer=answer,
+        standalone_question=standalone_question,
         sources=[DebugSourceChunk(**r) for r in results],
     )
 

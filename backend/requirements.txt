@@ -12,12 +12,12 @@ qdrant-client==1.11.1
 fastembed==0.4.2
 
 # LLM (Groq free tier)
-groq>=0.26.0
+groq==0.11.0
 
-# Document parsing
-pypdf==5.0.1
+# Document parsing — PyMuPDF gives real font-size/style info (used for PDF
+# heading detection), which plain pypdf/markdown-it-py can't provide.
+pymupdf==1.28.0
 python-docx==1.1.2
-markdown-it-py==3.0.0
 
 # Utilities
 tenacity==9.0.0

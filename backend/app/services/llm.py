@@ -42,6 +42,52 @@ When you don't have enough information to answer:
 You will be given some background information to answer from. Treat it as your own knowledge, not as an external source you're citing."""
 
 
+# Rewrites a follow-up question ("what about the deadline for that?") into a
+# standalone one ("what is the deadline for ISA?") using recent conversation
+# history, before retrieval runs. Without this, a follow-up question is
+# embedded and searched on its own — "that" carries no meaning on its own,
+# so retrieval pulls irrelevant chunks even though a human would know
+# exactly what "that" refers to. Adapted from a technique sometimes called
+# "query condensing" in conversational RAG systems.
+_CONDENSE_PROMPT = """Given the recent conversation and a new question from a student, rewrite the new question as a fully standalone question that includes any context it implicitly depends on (for example, replace "it", "that", "this" with the specific thing being referred to). If the question is already standalone, return it completely unchanged. Reply with ONLY the rewritten question and nothing else — no quotes, no explanation, no preamble.
+
+Conversation so far:
+{history}
+
+New question: {question}
+
+Standalone question:"""
+
+
+def _format_history(history: list) -> str:
+    # Keep only the last few turns — plenty for resolving pronouns/implicit
+    # references, keeps this extra call short and cheap.
+    lines = []
+    for h in history[-6:]:
+        speaker = "Student" if h.role == "user" else "Assistant"
+        lines.append(f"{speaker}: {h.content}")
+    return "\n".join(lines)
+
+
+def condense_question(question: str, history: list) -> str:
+    """Returns the question unchanged if there's no history yet (the common
+    case — most questions are one-shot, not follow-ups), so this adds no
+    extra latency/cost until a conversation actually has turns behind it."""
+    if not history:
+        return question
+
+    client = get_client()
+    prompt = _CONDENSE_PROMPT.format(history=_format_history(history), question=question)
+    completion = client.chat.completions.create(
+        model=settings.groq_model,
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0,
+        max_tokens=120,
+    )
+    standalone = (completion.choices[0].message.content or "").strip()
+    return standalone if standalone else question
+
+
 @lru_cache(maxsize=1)
 def get_client() -> Groq:
     return Groq(api_key=settings.groq_api_key)

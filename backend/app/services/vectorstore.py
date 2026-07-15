@@ -73,7 +73,12 @@ def upsert_chunks(document_id: str, filename: str, chunks: list[str], vectors: l
     client.upsert(collection_name=settings.qdrant_collection, points=points)
 
 
-def search(query_vector: list[float], top_k: int) -> list[dict]:
+def search(query_vector: list[float], top_k: int, min_score: float = 0.0) -> list[dict]:
+    """Retrieves the top_k most similar chunks, then discards any below
+    min_score. Without this floor, a genuinely off-topic question still
+    retrieves *something* (there's always a "closest" match, even if it's
+    barely related) and the model can end up stretching a weak match into
+    an answer instead of honestly saying it doesn't know."""
     client = get_client()
     results = client.search(
         collection_name=settings.qdrant_collection,
@@ -91,6 +96,7 @@ def search(query_vector: list[float], top_k: int) -> list[dict]:
             "score": r.score,
         }
         for r in results
+        if r.score >= min_score
     ]
 
 

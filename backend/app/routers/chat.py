@@ -19,11 +19,16 @@ router = APIRouter(prefix="/chat", tags=["chat"], dependencies=[Depends(require_
 
 @router.post("", response_model=ChatResponse)
 async def chat(request: ChatRequest):
-    query_vector = embeddings.embed_query(request.question)
+    # Rewrite follow-up questions ("what about that?") into standalone ones
+    # using recent history, so retrieval works correctly in a multi-turn
+    # conversation, not just for one-shot questions.
+    standalone_question = llm.condense_question(request.question, request.history)
+
+    query_vector = embeddings.embed_query(standalone_question)
 
     vectorstore.ensure_collection()
-    results = vectorstore.search(query_vector, top_k=settings.top_k)
+    results = vectorstore.search(query_vector, top_k=settings.top_k, min_score=settings.min_score)
 
-    answer = llm.generate_answer(request.question, results)
+    answer = llm.generate_answer(standalone_question, results)
 
     return ChatResponse(answer=answer)

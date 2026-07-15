@@ -221,9 +221,19 @@ export default function AdminDashboardPage({ adminKey, onLogout }) {
 
           {debugResult && (
             <div className="flex flex-col gap-3">
+              {debugResult.standalone_question !== debugQuestion && (
+                <p className="text-[12px] text-muted">
+                  Interpreted as: <span className="text-ink font-medium">"{debugResult.standalone_question}"</span>
+                </p>
+              )}
               <div className="rounded-xl border border-border bg-surface shadow-card px-4 py-3 text-[14px] text-ink">
                 {debugResult.answer}
               </div>
+              {debugResult.sources.length === 0 && (
+                <p className="text-[12.5px] text-muted">
+                  No chunks cleared the similarity threshold — the assistant answered without grounding, or gave its "don't know" fallback.
+                </p>
+              )}
               <div className="grid sm:grid-cols-2 gap-2">
                 {debugResult.sources.map((s, i) => (
                   <SourceChip key={i} source={s} />

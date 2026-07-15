@@ -26,11 +26,11 @@ async function request(path, { adminKey, headers, ...options } = {}) {
 
 // --- Public (no login required) ---
 
-export function askQuestion(question) {
+export function askQuestion(question, history = []) {
   return request("/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ question }),
+    body: JSON.stringify({ question, history }),
   });
 }
 

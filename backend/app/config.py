@@ -27,7 +27,9 @@ class Settings(BaseSettings):
     chunk_overlap: int = 150     # overlap between consecutive chunks
 
     # --- Retrieval ---
-    top_k: int = 5               # how many chunks to retrieve per query
+    top_k: int = 5                # how many chunks to retrieve per query
+    min_score: float = 0.15       # discard retrieved chunks below this similarity — avoids
+                                   # answering off a weak, barely-related match
 
     # --- App / security ---
     api_key: str = "change-me"     # shared key the public frontend uses to call /chat
