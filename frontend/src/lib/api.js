@@ -38,6 +38,16 @@ export function getTopics() {
   return request("/topics");
 }
 
+// message_id comes from the /chat response — ties this rating back to the
+// exact answer that was shown, without the client needing to resend it.
+export function sendFeedback(messageId, rating) {
+  return request("/chat/feedback", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message_id: messageId, rating }),
+  });
+}
+
 // --- Admin (adminKey passed explicitly each call — never stored in the
 // build, only ever in the browser's localStorage after manual login) ---
 
@@ -93,4 +103,40 @@ export function adminDebugChat(adminKey, question) {
 
 export function adminGetStats(adminKey) {
   return request("/admin/stats", { adminKey });
+}
+
+// --- Unanswered / low-confidence questions ---
+
+export function adminListUnanswered(adminKey) {
+  // Always fetches both open and resolved — the dashboard filters/groups
+  // client-side, so one fetch covers every filter view without refetching.
+  return request("/admin/unanswered?include_resolved=true", { adminKey });
+}
+
+export function adminResolveUnanswered(adminKey, entryId) {
+  return request(`/admin/unanswered/${entryId}/resolve`, { method: "POST", adminKey });
+}
+
+export function adminResolveUnansweredGroup(adminKey, standaloneQuestion) {
+  return request(`/admin/unanswered/resolve-group?standalone_question=${encodeURIComponent(standaloneQuestion)}`, {
+    method: "POST",
+    adminKey,
+  });
+}
+
+// --- User feedback log ---
+
+export function adminListFeedback(adminKey, rating) {
+  const query = rating ? `?rating=${rating}` : "";
+  return request(`/admin/feedback${query}`, { adminKey });
+}
+
+// --- Verified-answer cache (built from 👍 feedback) ---
+
+export function adminListVerifiedAnswers(adminKey) {
+  return request("/admin/verified-answers", { adminKey });
+}
+
+export function adminDeleteVerifiedAnswer(adminKey, pointId) {
+  return request(`/admin/verified-answers/${pointId}`, { method: "DELETE", adminKey });
 }

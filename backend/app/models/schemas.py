@@ -18,6 +18,15 @@ class ChatRequest(BaseModel):
 
 class ChatResponse(BaseModel):
     answer: str
+    # Opaque id for this specific answer, used only to attach 👍/👎 feedback
+    # to it afterwards via POST /chat/feedback. Not a retrieval/debug field —
+    # it never carries chunk text, filenames, or scores.
+    message_id: str
+
+
+class FeedbackRequest(BaseModel):
+    message_id: str
+    rating: str   # "up" or "down"
 
 
 # --- Admin: document management ---
@@ -42,6 +51,10 @@ class DebugSourceChunk(BaseModel):
     point_id: str
     text: str
     score: float
+    # Net accumulated 👍/👎 votes this specific chunk has received across
+    # all past answers it contributed to. 0 if it's never been rated.
+    # Visible only here, in the admin debug panel — never on public /chat.
+    boost: int = 0
 
 
 class DebugChatResponse(BaseModel):
@@ -61,3 +74,38 @@ class CollectionStats(BaseModel):
     total_documents: int
     vector_size: int
     status: str
+
+
+# --- Admin: feedback-driven chunk re-ranking ---
+class ChunkBoost(BaseModel):
+    point_id: str
+    boost: int
+    updated_at: float
+
+
+# --- Admin: low-confidence / unanswered questions ---
+class UnansweredQuestion(BaseModel):
+    id: str
+    question: str
+    standalone_question: str
+    top_score: float | None
+    created_at: float
+    notified_at: float | None
+    resolved: bool
+
+
+# --- Admin: feedback log ---
+class FeedbackEntry(BaseModel):
+    id: str
+    rating: str
+    created_at: float
+    question: str
+    standalone_question: str
+    answer: str
+
+
+# --- Admin: verified-answer cache (built from 👍 feedback) ---
+class VerifiedAnswer(BaseModel):
+    point_id: str
+    question: str
+    answer: str

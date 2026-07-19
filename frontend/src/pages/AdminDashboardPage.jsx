@@ -1,12 +1,19 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Upload, FileText, X, Loader2, LogOut, Database, Search } from "lucide-react";
+import {
+  Upload, FileText, X, Loader2, LogOut, Database, Search,
+  ThumbsUp, ThumbsDown, Sparkles,
+} from "lucide-react";
 import SourceChip from "../components/SourceChip";
+import FlaggedQuestions from "../components/FlaggedQuestions";
 import {
   adminListDocuments,
   adminUploadDocument,
   adminDeleteDocument,
   adminDebugChat,
   adminGetStats,
+  adminListFeedback,
+  adminListVerifiedAnswers,
+  adminDeleteVerifiedAnswer,
 } from "../lib/api";
 
 export default function AdminDashboardPage({ adminKey, onLogout }) {
@@ -22,13 +29,23 @@ export default function AdminDashboardPage({ adminKey, onLogout }) {
   const [debugResult, setDebugResult] = useState(null);
   const [debugLoading, setDebugLoading] = useState(false);
 
+  const [feedback, setFeedback] = useState([]);
+  const [verifiedAnswers, setVerifiedAnswers] = useState([]);
+
   const inputRef = useRef(null);
 
   const refresh = useCallback(async () => {
     try {
-      const [docs, s] = await Promise.all([adminListDocuments(adminKey), adminGetStats(adminKey)]);
+      const [docs, s, feedbackList, verifiedList] = await Promise.all([
+        adminListDocuments(adminKey),
+        adminGetStats(adminKey),
+        adminListFeedback(adminKey),
+        adminListVerifiedAnswers(adminKey),
+      ]);
       setDocuments(docs);
       setStats(s);
+      setFeedback(feedbackList);
+      setVerifiedAnswers(verifiedList);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -85,6 +102,16 @@ export default function AdminDashboardPage({ adminKey, onLogout }) {
     }
   };
 
+  const handleDeleteVerifiedAnswer = async (pointId) => {
+    setVerifiedAnswers((prev) => prev.filter((v) => v.point_id !== pointId));
+    try {
+      await adminDeleteVerifiedAnswer(adminKey, pointId);
+    } catch (err) {
+      setError(`Couldn't remove cached answer: ${err.message}`);
+      refresh();
+    }
+  };
+
   return (
     <div className="min-h-screen bg-base text-ink font-sans">
       <header className="flex items-center justify-between px-6 py-4 border-b border-border bg-surface">
@@ -114,6 +141,8 @@ export default function AdminDashboardPage({ adminKey, onLogout }) {
           <StatCard label="Documents" value={stats?.total_documents ?? "…"} icon={FileText} />
           <StatCard label="Collection status" value={stats?.status ?? "…"} icon={Database} />
         </section>
+
+        <FlaggedQuestions adminKey={adminKey} onError={setError} />
 
         {/* --- Upload --- */}
         <section>
@@ -195,7 +224,74 @@ export default function AdminDashboardPage({ adminKey, onLogout }) {
           </ul>
         </section>
 
-        {/* --- Debug retrieval tester --- */}
+        {/* --- Verified-answer cache (built from 👍 feedback) --- */}
+        <section>
+          <h2 className="text-[13px] font-medium text-muted uppercase tracking-wider mb-3 flex items-center gap-1.5">
+            <Sparkles size={13} />
+            Verified-answer cache {verifiedAnswers.length > 0 && `(${verifiedAnswers.length})`}
+          </h2>
+          <p className="text-[12.5px] text-muted mb-3">
+            Answers users marked 👍. Near-duplicate future questions are served straight from here — instantly,
+            and always the same approved wording. Remove one if it was approved by mistake or is now outdated.
+          </p>
+
+          {verifiedAnswers.length === 0 ? (
+            <p className="text-[13px] text-muted py-3">No verified answers yet — these appear once users start giving 👍 feedback in chat.</p>
+          ) : (
+            <ul className="grid sm:grid-cols-2 gap-2.5">
+              {verifiedAnswers.map((v) => (
+                <li
+                  key={v.point_id}
+                  className="group rounded-xl border border-border bg-surface px-4 py-3 shadow-card"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-[13px] text-ink font-medium line-clamp-2">{v.question}</p>
+                    <button
+                      onClick={() => handleDeleteVerifiedAnswer(v.point_id)}
+                      aria-label="Remove cached answer"
+                      className="opacity-0 group-hover:opacity-100 transition-opacity text-muted hover:text-danger shrink-0"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                  <p className="text-[12px] text-muted mt-1.5 line-clamp-3">{v.answer}</p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        {/* --- User feedback log --- */}
+        <section>
+          <h2 className="text-[13px] font-medium text-muted uppercase tracking-wider mb-3">
+            Recent feedback {feedback.length > 0 && `(${feedback.length})`}
+          </h2>
+
+          {feedback.length === 0 ? (
+            <p className="text-[13px] text-muted py-3">No feedback yet.</p>
+          ) : (
+            <ul className="flex flex-col gap-2">
+              {feedback.map((f) => (
+                <li
+                  key={f.id}
+                  className="flex items-start gap-3 rounded-xl border border-border bg-surface px-4 py-3 shadow-card"
+                >
+                  {f.rating === "up" ? (
+                    <ThumbsUp size={14} className="text-emerald-500 shrink-0 mt-0.5" />
+                  ) : (
+                    <ThumbsDown size={14} className="text-danger shrink-0 mt-0.5" />
+                  )}
+                  <div className="min-w-0">
+                    <p className="text-[13px] text-ink font-medium">{f.question}</p>
+                    <p className="text-[12px] text-muted mt-0.5 line-clamp-2">{f.answer}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+
         <section>
           <h2 className="text-[13px] font-medium text-muted uppercase tracking-wider mb-3">
             Debug retrieval
