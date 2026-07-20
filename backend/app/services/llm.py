@@ -49,14 +49,26 @@ You will be given some background information to answer from. Treat it as your o
 # so retrieval pulls irrelevant chunks even though a human would know
 # exactly what "that" refers to. Adapted from a technique sometimes called
 # "query condensing" in conversational RAG systems.
-_CONDENSE_PROMPT = """Given the recent conversation and a new question from a student, rewrite the new question as a fully standalone question that includes any context it implicitly depends on (for example, replace "it", "that", "this" with the specific thing being referred to). If the question is already standalone, return it completely unchanged. Reply with ONLY the rewritten question and nothing else — no quotes, no explanation, no preamble.
+_CONDENSE_PROMPT = """You are deciding whether a student's latest question depends on the previous conversation.
 
-Conversation so far:
+Rules:
+1. If the latest question is already complete and understandable by itself, RETURN IT EXACTLY AS WRITTEN.
+2. Do NOT improve wording.
+3. Do NOT add extra information.
+4. Do NOT merge it with previous discussion.
+5. ONLY rewrite if the latest question contains references like:
+   "it", "its", "that", "this", "those", "them", "they", "same", "again", "continue", "above", or "previous".
+
+Conversation:
 {history}
 
-New question: {question}
+Latest question:
+{question}
 
-Standalone question:"""
+Return ONLY the final standalone question.
+No explanations.
+No quotes.
+"""
 
 
 def _format_history(history: list) -> str:
@@ -69,15 +81,35 @@ def _format_history(history: list) -> str:
     return "\n".join(lines)
 
 
+
+FOLLOW_UP_WORDS = {
+    "it", "its", "it's",
+    "that", "this", "these", "those",
+    "they", "them",
+    "same", "again", "continue",
+    "above", "previous",
+}
+
+def _looks_like_follow_up(question: str) -> bool:
+    q = question.lower().strip()
+    if q.startswith("what about"):
+        return True
+    words = set(q.replace("?", "").replace(",", "").split())
+    return any(word in words for word in FOLLOW_UP_WORDS)
+
 def condense_question(question: str, history: list) -> str:
-    """Returns the question unchanged if there's no history yet (the common
-    case — most questions are one-shot, not follow-ups), so this adds no
-    extra latency/cost until a conversation actually has turns behind it."""
+    """Rewrite only genuine follow-up questions."""
     if not history:
         return question
 
+    if not _looks_like_follow_up(question):
+        return question
+
     client = get_client()
-    prompt = _CONDENSE_PROMPT.format(history=_format_history(history), question=question)
+    prompt = _CONDENSE_PROMPT.format(
+        history=_format_history(history),
+        question=question,
+    )
     completion = client.chat.completions.create(
         model=settings.groq_model,
         messages=[{"role": "user", "content": prompt}],
